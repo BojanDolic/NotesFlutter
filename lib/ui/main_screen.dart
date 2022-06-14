@@ -23,6 +23,7 @@ class _MainScreenState extends State<MainScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     final isLandscape = MediaQuery.of(context).orientation == Orientation.landscape;
     return Scaffold(
       drawer: Drawer(
@@ -34,7 +35,7 @@ class _MainScreenState extends State<MainScreen> {
             ),
             ListView(
               shrinkWrap: true,
-              physics: BouncingScrollPhysics(),
+              physics: const BouncingScrollPhysics(),
               children: [
                 ListTile(
                   title: const Text("Pjesme"),
@@ -73,33 +74,10 @@ class _MainScreenState extends State<MainScreen> {
         ),
       ),
       appBar: AppBar(
-        elevation: 1,
-        titleSpacing: 0,
-        shape: const RoundedRectangleBorder(
-          borderRadius: BorderRadius.only(
-            bottomLeft: Radius.circular(16),
-            bottomRight: Radius.circular(16),
-          ),
-        ),
-        title: TextField(
-          controller: _searchController,
-          onChanged: (text) => _searchNotes(text),
-          keyboardType: TextInputType.text,
-          autofocus: false,
-          decoration: InputDecoration(
-            filled: true,
-            hintText: "Search for note",
-            border: OutlineInputBorder(
-              borderSide: BorderSide.none,
-              borderRadius: BorderRadius.circular(16),
-            ),
-            suffixIcon: IconButton(
-              icon: const Icon(
-                Icons.clear,
-              ),
-              onPressed: () => _deleteSearch(),
-            ),
-          ),
+        elevation: 0,
+        title: Text(
+          "Notes",
+          style: theme.textTheme.headlineMedium,
         ),
       ),
       floatingActionButton: FloatingActionButton(
@@ -131,21 +109,56 @@ class _MainScreenState extends State<MainScreen> {
           }
           if (state is NoteLoaded) {
             return Padding(
-              padding: const EdgeInsets.symmetric(
-                horizontal: 6,
-                vertical: 6,
+              padding: const EdgeInsets.only(
+                left: 6,
+                right: 6,
+                bottom: 6,
               ),
-              child: MasonryGridView.builder(
-                physics: const BouncingScrollPhysics(),
-                itemCount: state.notes.length,
-                gridDelegate: SliverSimpleGridDelegateWithFixedCrossAxisCount(crossAxisCount: isLandscape ? 3 : 2),
-                itemBuilder: (context, index) {
-                  return NoteWidget(
-                    note: state.notes[index],
-                    onLongPress: () => _openDeleteDialog(state, index),
-                    onTap: () => _openNote(state, state.notes[index]),
-                  );
-                },
+              child: Column(
+                mainAxisSize: MainAxisSize.max,
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 12),
+                    child: TextField(
+                      controller: _searchController,
+                      onChanged: (text) => _searchNotes(text),
+                      keyboardType: TextInputType.text,
+                      autofocus: false,
+                      decoration: InputDecoration(
+                        contentPadding: const EdgeInsets.symmetric(horizontal: 12),
+                        filled: true,
+                        hintText: "Search for note",
+                        border: OutlineInputBorder(
+                          borderSide: BorderSide.none,
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        suffixIcon: IconButton(
+                          icon: const Icon(
+                            Icons.clear,
+                          ),
+                          onPressed: () => _deleteSearch(),
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(
+                    height: 16,
+                  ),
+                  Expanded(
+                    child: MasonryGridView.builder(
+                      physics: const BouncingScrollPhysics(),
+                      itemCount: state.notes.length,
+                      gridDelegate: SliverSimpleGridDelegateWithFixedCrossAxisCount(crossAxisCount: isLandscape ? 3 : 2),
+                      itemBuilder: (context, index) {
+                        return NoteWidget(
+                          note: state.notes[index],
+                          onLongPress: () => _openDeleteDialog(state, index),
+                          onTap: () => _openNote(state, state.notes[index]),
+                        );
+                      },
+                    ),
+                  ),
+                ],
               ),
             );
           } else {
