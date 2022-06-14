@@ -27,12 +27,15 @@ class Repository {
   }
 
   void insertNote(Note note) {
-    final id = noteBox.put(note);
-    print("ID POSLE INSERT $id");
+    noteBox.put(note);
   }
 
   void deleteNote(Note note) {
     noteBox.remove(note.id);
+  }
+
+  void deleteNotes(List<int> ids) {
+    noteBox.removeMany(ids);
   }
 
   List<Note> searchNote(String query) {

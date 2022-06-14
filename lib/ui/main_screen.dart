@@ -21,6 +21,10 @@ class MainScreen extends StatefulWidget {
 class _MainScreenState extends State<MainScreen> {
   TextEditingController _searchController = TextEditingController();
 
+  bool selecting = false;
+
+  List<Note> selectedNotes = [];
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -73,13 +77,45 @@ class _MainScreenState extends State<MainScreen> {
           ],
         ),
       ),
-      appBar: AppBar(
-        elevation: 0,
-        title: Text(
-          "Notes",
-          style: theme.textTheme.headlineMedium,
-        ),
-      ),
+      appBar: selecting
+          ? AppBar(
+              automaticallyImplyLeading: false,
+              title: Text(
+                "Selected: ${selectedNotes.length}",
+                style: theme.textTheme.headlineMedium,
+              ),
+              actions: selecting
+                  ? [
+                      IconButton(
+                        onPressed: () {
+                          _deleteSelectedNotes();
+                        },
+                        icon: const Icon(
+                          Icons.delete_outline_rounded,
+                          color: Colors.blue,
+                        ),
+                      ),
+                      IconButton(
+                        onPressed: () {
+                          setState(() {
+                            selecting = false;
+                            selectedNotes.removeRange(0, selectedNotes.length);
+                          });
+                        },
+                        icon: const Icon(
+                          Icons.close,
+                        ),
+                      ),
+                    ]
+                  : null,
+            )
+          : AppBar(
+              elevation: 0,
+              title: Text(
+                "Notes",
+                style: theme.textTheme.headlineMedium,
+              ),
+            ),
       floatingActionButton: FloatingActionButton(
         child: const Icon(Icons.add),
         onPressed: () async {
@@ -117,29 +153,35 @@ class _MainScreenState extends State<MainScreen> {
               child: Column(
                 mainAxisSize: MainAxisSize.max,
                 children: [
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 12),
-                    child: TextField(
-                      controller: _searchController,
-                      onChanged: (text) => _searchNotes(text),
-                      keyboardType: TextInputType.text,
-                      autofocus: false,
-                      decoration: InputDecoration(
-                        contentPadding: const EdgeInsets.symmetric(horizontal: 12),
-                        filled: true,
-                        hintText: "Search for note",
-                        border: OutlineInputBorder(
-                          borderSide: BorderSide.none,
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        suffixIcon: IconButton(
-                          icon: const Icon(
-                            Icons.clear,
+                  AnimatedCrossFade(
+                    firstChild: Padding(
+                      key: Key("padding"),
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                      child: TextField(
+                        controller: _searchController,
+                        onChanged: (text) => _searchNotes(text),
+                        keyboardType: TextInputType.text,
+                        autofocus: false,
+                        decoration: InputDecoration(
+                          contentPadding: const EdgeInsets.symmetric(horizontal: 12),
+                          filled: true,
+                          hintText: "Search for note",
+                          border: OutlineInputBorder(
+                            borderSide: BorderSide.none,
+                            borderRadius: BorderRadius.circular(12),
                           ),
-                          onPressed: () => _deleteSearch(),
+                          suffixIcon: IconButton(
+                            icon: const Icon(
+                              Icons.clear,
+                            ),
+                            onPressed: () => _deleteSearch(),
+                          ),
                         ),
                       ),
                     ),
+                    secondChild: const SizedBox(),
+                    crossFadeState: selecting ? CrossFadeState.showSecond : CrossFadeState.showFirst,
+                    duration: const Duration(milliseconds: 100),
                   ),
                   const SizedBox(
                     height: 16,
@@ -150,10 +192,24 @@ class _MainScreenState extends State<MainScreen> {
                       itemCount: state.notes.length,
                       gridDelegate: SliverSimpleGridDelegateWithFixedCrossAxisCount(crossAxisCount: isLandscape ? 3 : 2),
                       itemBuilder: (context, index) {
+                        final note = state.notes[index];
                         return NoteWidget(
+                          selected: selectedNotes.contains(note),
                           note: state.notes[index],
-                          onLongPress: () => _openDeleteDialog(state, index),
-                          onTap: () => _openNote(state, state.notes[index]),
+                          onLongPress: () {
+                            //_openDeleteDialog(state, index)
+                            setState(() {
+                              selecting = true;
+                              selectedNotes.add(note);
+                            });
+                          },
+                          onTap: () {
+                            if (selecting) {
+                              _selectNote(note);
+                            } else {
+                              _openNote(state, state.notes[index]);
+                            }
+                          },
                         );
                       },
                     ),
@@ -171,7 +227,7 @@ class _MainScreenState extends State<MainScreen> {
     );
   }
 
-  void _openDeleteDialog(NoteLoaded state, int index) {
+  /*void _openDeleteDialog(NoteLoaded state, int index) {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
@@ -209,9 +265,31 @@ class _MainScreenState extends State<MainScreen> {
         ],
       ),
     );
+  }*/
+
+  _selectNote(Note note) {
+    if (selectedNotes.contains(note)) {
+      setState(() {
+        selectedNotes.remove(note);
+        if (selectedNotes.isEmpty) {
+          _deselectAllNotes();
+        }
+      });
+    } else {
+      setState(() {
+        selectedNotes.add(note);
+      });
+    }
   }
 
-  void _deleteNote(NoteLoaded state, int index) {
+  _deselectAllNotes() {
+    setState(() {
+      selecting = false;
+      selectedNotes.removeRange(0, selectedNotes.length);
+    });
+  }
+
+  /*void _deleteNote(NoteLoaded state, int index) {
     context.read<NoteBloc>().add(
           DeleteNote(
             state.notes[index],
@@ -222,7 +300,7 @@ class _MainScreenState extends State<MainScreen> {
         content: Text("Note deleted"),
       ),
     );
-  }
+  }*/
 
   _searchNotes(String text) {
     context.read<NoteBloc>().add(
@@ -240,5 +318,13 @@ class _MainScreenState extends State<MainScreen> {
 
   _openNote(NoteLoaded state, Note note) async {
     Navigator.pushNamed(context, AddNoteScreen.id, arguments: note);
+  }
+
+  void _deleteSelectedNotes() {
+    final _notesToDelete = List.of(selectedNotes);
+    context.read<NoteBloc>().add(
+          DeleteNotes(notes: _notesToDelete),
+        );
+    _deselectAllNotes();
   }
 }

@@ -16,6 +16,7 @@ class NoteBloc extends Bloc<NoteEvent, NoteState> {
     on<DeleteNote>(_deleteNote);
     on<SearchNotes>(_searchNote);
     on<UpdateNote>(_updateNote);
+    on<DeleteNotes>(_deleteNotes);
   }
 
   void _loadNotes(LoadNotes event, Emitter<NoteState> emitter) {
@@ -28,7 +29,7 @@ class NoteBloc extends Bloc<NoteEvent, NoteState> {
     final state = this.state;
     if (state is NoteLoaded) {
       _repository.insertNote(event.note);
-      final notes = _repository.getAllNotes();
+      //final notes = _repository.getAllNotes();
       emit(
         NoteLoaded(
           notes: _repository.getAllNotes(query: _query),
@@ -44,6 +45,28 @@ class NoteBloc extends Bloc<NoteEvent, NoteState> {
       final _notes = state.notes;
       _notes.remove(event.note);
       emit(
+        NoteLoaded(
+          notes: _repository.getAllNotes(query: _query),
+        ),
+      );
+    }
+  }
+
+  FutureOr<void> _deleteNotes(DeleteNotes event, Emitter<NoteState> emitter) {
+    final state = this.state;
+
+    if (state is NoteLoaded) {
+      final eventNotes = event.notes;
+
+      _repository.deleteNotes(
+        eventNotes
+            .map(
+              (e) => e.id,
+            )
+            .toList(),
+      );
+
+      emitter(
         NoteLoaded(
           notes: _repository.getAllNotes(query: _query),
         ),

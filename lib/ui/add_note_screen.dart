@@ -23,33 +23,24 @@ class _AddNoteScreenState extends State<AddNoteScreen> {
   TextEditingController descController = TextEditingController();
 
   final Map<int, Color> colorMap = {
-    0: lightRedNoteColor,
-    1: deepBlueNoteColor,
-    2: lightGreenNoteColor,
+    0: Colors.white,
+    1: lightRedNoteColor,
+    2: summerNoteColor,
+    3: lightGreenNoteColor,
+    4: yellowNoteColor,
+    5: pinkNoteColor,
   };
-
-  final Map<int, String> colorNameMap = {
-    0: "Light red",
-    1: "Deep blue",
-    2: "Light green",
-  };
-
-  final colors = [
-    lightRedNoteColor,
-    deepBlueNoteColor,
-  ];
 
   var _note = Note();
-  var selectedColor = 255;
+  var selectedColor = Colors.white;
 
   @override
   void initState() {
     if (widget.note != null) {
       _note = widget.note!;
-      print("NOTE ID: ${_note.id}");
       titleController.text = _note.title;
       descController.text = _note.description;
-      selectedColor = _note.color;
+      selectedColor = Color(_note.color);
     }
     super.initState();
   }
@@ -60,8 +51,10 @@ class _AddNoteScreenState extends State<AddNoteScreen> {
     return WillPopScope(
       onWillPop: () => _onWillPop(),
       child: Scaffold(
+        backgroundColor: selectedColor,
         appBar: AppBar(
           elevation: 0,
+          backgroundColor: selectedColor,
         ),
         body: SafeArea(
           child: SingleChildScrollView(
@@ -76,53 +69,50 @@ class _AddNoteScreenState extends State<AddNoteScreen> {
                   TextField(
                     style: theme.textTheme.headlineMedium?.copyWith(color: Colors.black87),
                     decoration: InputDecoration(
-                      hintStyle: theme.textTheme.headlineMedium?.copyWith(color: Colors.grey.shade500),
+                      hintStyle: theme.textTheme.headlineMedium?.copyWith(color: Colors.black),
                       border: InputBorder.none,
                       hintText: "Title",
                     ),
                     controller: titleController,
-                    onChanged: (text) => _insertNote(text, descController.text, selectedColor),
+                    onChanged: (text) => _insertNote(text, descController.text, selectedColor.value),
                   ),
                   TextField(
                     style: theme.textTheme.bodyMedium,
                     decoration: InputDecoration(
-                      hintStyle: theme.textTheme.bodyMedium?.copyWith(color: Colors.grey.shade500),
+                      hintStyle: theme.textTheme.bodyMedium,
                       border: InputBorder.none,
                       hintText: "Note",
                     ),
                     keyboardType: TextInputType.multiline,
                     maxLines: null,
                     controller: descController,
-                    onChanged: (text) => _insertNote(titleController.text, text, selectedColor),
+                    onChanged: (text) => _insertNote(titleController.text, text, selectedColor.value),
                   ),
-                  Align(
-                    alignment: Alignment.bottomCenter,
-                    child: Wrap(
-                      children: List<Widget>.generate(
-                        colorMap.length,
-                        (index) {
-                          final _color = colorMap[index]!;
-                          final colorText = colorNameMap[index];
-                          return Padding(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 6,
+                  Wrap(
+                    children: List<Widget>.generate(colorMap.length, (index) {
+                      final color = colorMap[index]!;
+                      return Padding(
+                        padding: const EdgeInsets.all(3.0),
+                        child: GestureDetector(
+                          onTap: () {
+                            setState(() {
+                              selectedColor = color;
+                            });
+                          },
+                          child: Container(
+                            width: 40,
+                            height: 40,
+                            decoration: BoxDecoration(
+                              border: Border.all(color: Colors.black38),
+                              color: color,
+                              borderRadius: BorderRadius.circular(100),
                             ),
-                            child: ChoiceChip(
-                              selected: selectedColor == _color.value,
-                              selectedColor: _color,
-                              onSelected: (selected) {
-                                setState(() {
-                                  selectedColor = _color.value;
-                                  _insertNote(titleController.text, descController.text, selectedColor);
-                                });
-                              },
-                              label: Text(colorText ?? ""),
-                            ),
-                          );
-                        },
-                      ).toList(),
-                    ),
-                  ),
+                            child: isSelectedColor(color) ? const Icon(Icons.check) : const SizedBox(),
+                          ),
+                        ),
+                      );
+                    }).toList(),
+                  )
                 ],
               ),
             ),
@@ -132,10 +122,12 @@ class _AddNoteScreenState extends State<AddNoteScreen> {
     );
   }
 
+  bool isSelectedColor(Color color) => selectedColor == color;
+
   Future<bool> _onWillPop() async {
     _note.title = titleController.text;
     _note.description = descController.text;
-    _note.color = selectedColor;
+    _note.color = selectedColor.value;
 
     BlocProvider.of<NoteBloc>(context).add(
       AddNote(
