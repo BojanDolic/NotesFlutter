@@ -73,6 +73,7 @@ class MyApp extends StatelessWidget {
               color: Colors.black54,
             ),
           ),
+          shadowColor: Colors.black,
           canvasColor: Colors.white,
           listTileTheme: const ListTileThemeData(
             selectedTileColor: Colors.white54,

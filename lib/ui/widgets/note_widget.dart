@@ -19,7 +19,6 @@ class NoteWidget extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    print("NOTE COLOR: ${note.color}");
     return Padding(
       padding: const EdgeInsets.all(4.0),
       child: InkWell(
@@ -69,7 +68,7 @@ class NoteWidget extends StatelessWidget {
               borderRadius: BorderRadius.circular(12),
               border: selected
                   ? Border.all(
-                      color: Colors.blue,
+                      color: Colors.black,
                       width: selected ? 2.5 : 1,
                     )
                   : Border.all(

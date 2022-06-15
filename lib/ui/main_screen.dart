@@ -181,7 +181,7 @@ class _MainScreenState extends State<MainScreen> {
                     ),
                     secondChild: const SizedBox(),
                     crossFadeState: selecting ? CrossFadeState.showSecond : CrossFadeState.showFirst,
-                    duration: const Duration(milliseconds: 100),
+                    duration: const Duration(milliseconds: 200),
                   ),
                   const SizedBox(
                     height: 16,
@@ -190,6 +190,7 @@ class _MainScreenState extends State<MainScreen> {
                     child: MasonryGridView.builder(
                       physics: const BouncingScrollPhysics(),
                       itemCount: state.notes.length,
+                      clipBehavior: Clip.none,
                       gridDelegate: SliverSimpleGridDelegateWithFixedCrossAxisCount(crossAxisCount: isLandscape ? 3 : 2),
                       itemBuilder: (context, index) {
                         final note = state.notes[index];
@@ -197,7 +198,6 @@ class _MainScreenState extends State<MainScreen> {
                           selected: selectedNotes.contains(note),
                           note: state.notes[index],
                           onLongPress: () {
-                            //_openDeleteDialog(state, index)
                             setState(() {
                               selecting = true;
                               selectedNotes.add(note);
@@ -227,46 +227,6 @@ class _MainScreenState extends State<MainScreen> {
     );
   }
 
-  /*void _openDeleteDialog(NoteLoaded state, int index) {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text("Delete this note ?"),
-        content: const Text("You are about to delete this note, this can't be reversed!"),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(12),
-        ),
-        actions: [
-          MaterialButton(
-            child: const Text(
-              "Close",
-              style: TextStyle(
-                fontWeight: FontWeight.normal,
-                fontFamily: "Poppins",
-              ),
-            ),
-            onPressed: () {
-              Navigator.pop(context);
-            },
-          ),
-          MaterialButton(
-            child: const Text(
-              "Delete",
-              style: TextStyle(
-                fontWeight: FontWeight.bold,
-                fontFamily: "Poppins",
-              ),
-            ),
-            onPressed: () {
-              _deleteNote(state, index);
-              Navigator.pop(context);
-            },
-          ),
-        ],
-      ),
-    );
-  }*/
-
   _selectNote(Note note) {
     if (selectedNotes.contains(note)) {
       setState(() {
@@ -288,19 +248,6 @@ class _MainScreenState extends State<MainScreen> {
       selectedNotes.removeRange(0, selectedNotes.length);
     });
   }
-
-  /*void _deleteNote(NoteLoaded state, int index) {
-    context.read<NoteBloc>().add(
-          DeleteNote(
-            state.notes[index],
-          ),
-        );
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text("Note deleted"),
-      ),
-    );
-  }*/
 
   _searchNotes(String text) {
     context.read<NoteBloc>().add(
