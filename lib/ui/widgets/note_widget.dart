@@ -1,3 +1,4 @@
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:notes_flutter/models/note.dart';
 import 'package:notes_flutter/utils/color_constants.dart';
@@ -35,7 +36,7 @@ class NoteWidget extends StatelessWidget {
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 mainAxisAlignment: MainAxisAlignment.start,
-                crossAxisAlignment: CrossAxisAlignment.stretch,
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
                     note.title,
@@ -59,7 +60,46 @@ class NoteWidget extends StatelessWidget {
                         ),
                       ],
                     ),
-                  )
+                  ),
+                  Visibility(
+                    visible: note.tags.isNotEmpty,
+                    child: Column(
+                      children: [
+                        const SizedBox(
+                          height: 9,
+                        ),
+                        Wrap(
+                          spacing: 6,
+                          children: List<Widget>.generate(
+                            tagsCount(note) > 2 ? 3 : tagsCount(note),
+                            (index) {
+                              return Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  const SizedBox(
+                                    height: 3,
+                                  ),
+                                  Container(
+                                    padding: const EdgeInsets.all(6),
+                                    decoration: BoxDecoration(
+                                      color: Color(note.color) == Colors.white ? Colors.grey.shade200 : Colors.white.withOpacity(0.3),
+                                      borderRadius: BorderRadius.circular(6),
+                                    ),
+                                    child: Text(
+                                      index > 1 ? getRemainingNotesCount(note) : note.tags[index].tagName,
+                                      style: theme.textTheme.bodySmall?.copyWith(
+                                        fontSize: 13,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              );
+                            },
+                          ).toList(),
+                        ),
+                      ],
+                    ),
+                  ),
                 ],
               ),
             ),
@@ -79,5 +119,12 @@ class NoteWidget extends StatelessWidget {
         ),
       ),
     );
+  }
+
+  tagsCount(Note note) => note.tags.length;
+
+  getRemainingNotesCount(Note note) {
+    final remainingNotes = note.tags.length - 2;
+    return "+$remainingNotes";
   }
 }

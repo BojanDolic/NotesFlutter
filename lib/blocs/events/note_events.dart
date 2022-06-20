@@ -46,6 +46,13 @@ class DeleteNotes extends NoteEvent {
   List<Object?> get props => [notes];
 }
 
+class ResetSearches extends NoteEvent {
+  const ResetSearches();
+
+  @override
+  List<Object?> get props => [];
+}
+
 class SearchNotes extends NoteEvent {
   final String query;
 
@@ -53,6 +60,15 @@ class SearchNotes extends NoteEvent {
 
   @override
   List<Object?> get props => [query];
+}
+
+class SearchNotesByTag extends NoteEvent {
+  final String tag;
+
+  const SearchNotesByTag({this.tag = ""});
+
+  @override
+  List<Object?> get props => [tag];
 }
 
 class UpdateNote extends NoteEvent {

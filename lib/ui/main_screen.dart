@@ -3,9 +3,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_staggered_grid_view/flutter_staggered_grid_view.dart';
 import 'package:notes_flutter/blocs/events/note_events.dart';
+import 'package:notes_flutter/blocs/events/tag_events.dart';
 import 'package:notes_flutter/blocs/note_bloc.dart';
 import 'package:notes_flutter/blocs/states/note_states.dart';
+import 'package:notes_flutter/blocs/states/tag_states.dart';
+import 'package:notes_flutter/blocs/tags_bloc.dart';
 import 'package:notes_flutter/models/note.dart';
+import 'package:notes_flutter/models/tag.dart';
 import 'package:notes_flutter/ui/add_note_screen.dart';
 import 'package:notes_flutter/ui/widgets/note_widget.dart';
 
@@ -19,211 +23,239 @@ class MainScreen extends StatefulWidget {
 }
 
 class _MainScreenState extends State<MainScreen> {
-  TextEditingController _searchController = TextEditingController();
+  final _searchController = TextEditingController();
+  final _tagNameController = TextEditingController();
 
   bool selecting = false;
 
   List<Note> selectedNotes = [];
 
+  final tagNameKey = GlobalKey();
+
+  String? tagNameError = null;
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    _tagNameController.dispose();
+    super.dispose();
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isLandscape = MediaQuery.of(context).orientation == Orientation.landscape;
-    return Scaffold(
-      drawer: Drawer(
-        child: Column(
-          children: [
-            const DrawerHeader(
-              margin: EdgeInsets.zero,
-              child: Text("Note categories"),
-            ),
-            ListView(
-              shrinkWrap: true,
-              physics: const BouncingScrollPhysics(),
-              children: [
-                ListTile(
-                  title: const Text("Pjesme"),
-                  leading: const Icon(Icons.label_important_outline_rounded),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(6),
-                  ),
-                  onTap: () {
-                    //TODO select labels
-                  },
-                ),
-                ListTile(
-                  title: const Text("Filmovi"),
-                  leading: const Icon(Icons.label_important_outline_rounded),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(6),
-                  ),
-                  onTap: () {
-                    //TODO select labels
-                  },
-                ),
-                ListTile(
-                  title: const Text("Create new label"),
-                  leading: const Icon(Icons.add),
-                  selected: true,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(6),
-                  ),
-                  onTap: () {
-                    //TODO add new label
-                  },
-                )
-              ],
-            ),
-          ],
-        ),
-      ),
-      appBar: selecting
-          ? AppBar(
-              automaticallyImplyLeading: false,
-              title: Text(
-                "Selected: ${selectedNotes.length}",
-                style: theme.textTheme.headlineMedium,
-              ),
-              actions: selecting
-                  ? [
-                      IconButton(
-                        onPressed: () {
-                          _deleteSelectedNotes();
-                        },
-                        icon: const Icon(
-                          Icons.delete_outline_rounded,
-                          color: Colors.blue,
-                        ),
-                      ),
-                      IconButton(
-                        onPressed: () {
-                          setState(() {
-                            selecting = false;
-                            selectedNotes.removeRange(0, selectedNotes.length);
-                          });
-                        },
-                        icon: const Icon(
-                          Icons.close,
-                        ),
-                      ),
-                    ]
-                  : null,
-            )
-          : AppBar(
-              elevation: 0,
-              title: Text(
-                "Notes",
-                style: theme.textTheme.headlineMedium,
-              ),
-            ),
-      floatingActionButton: FloatingActionButton(
-        child: const Icon(Icons.add),
-        onPressed: () async {
-          final insertedNote = await Navigator.pushNamed(context, AddNoteScreen.id) as Note?;
-
-          if (insertedNote != null) {
-            if (insertedNote.isEmpty()) {
-              context.read<NoteBloc>().add(
-                    DeleteNote(insertedNote),
-                  );
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text("Empty note discarded"),
-                ),
-              );
-            }
-          }
-        },
-      ),
-      body: SafeArea(
-        child: BlocBuilder<NoteBloc, NoteState>(builder: (context, state) {
-          print("Builder pozvan");
-          if (state is NoteLoading) {
-            return const Center(
-              child: CircularProgressIndicator(),
-            );
-          }
-          if (state is NoteLoaded) {
-            return Padding(
-              padding: const EdgeInsets.only(
-                left: 6,
-                right: 6,
-                bottom: 6,
-              ),
-              child: Column(
-                mainAxisSize: MainAxisSize.max,
-                children: [
-                  AnimatedCrossFade(
-                    firstChild: Padding(
-                      key: Key("padding"),
-                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                      child: TextField(
-                        controller: _searchController,
-                        onChanged: (text) => _searchNotes(text),
-                        keyboardType: TextInputType.text,
-                        autofocus: false,
-                        decoration: InputDecoration(
-                          contentPadding: const EdgeInsets.symmetric(horizontal: 12),
-                          filled: true,
-                          hintText: "Search for note",
-                          border: OutlineInputBorder(
-                            borderSide: BorderSide.none,
-                            borderRadius: BorderRadius.circular(12),
+    return BlocBuilder<NoteBloc, NoteState>(
+      builder: (BuildContext context, state) {
+        final noteBloc = context.read<NoteBloc>();
+        if (state is NoteLoaded) {
+          return Scaffold(
+            drawer: Drawer(
+              child: BlocBuilder<TagsBloc, TagState>(
+                builder: (BuildContext context, state) {
+                  if (state is LoadedTags) {
+                    return Column(
+                      children: [
+                        Expanded(
+                          child: ListView.builder(
+                            itemCount: state.tags.length + 1,
+                            itemBuilder: (context, index) {
+                              print(index);
+                              if (index != state.tags.length) {
+                                final tag = state.tags[index];
+                                return ListTile(
+                                  title: Text(
+                                    tag.tagName,
+                                    style: theme.textTheme.titleSmall?.copyWith(
+                                      color: Colors.blue,
+                                    ),
+                                  ),
+                                  leading: const Icon(
+                                    Icons.label_important_outline_rounded,
+                                    color: Colors.blue,
+                                  ),
+                                  onTap: () {
+                                    Navigator.pop(context);
+                                    _searchNotesByTag(tag.tagName);
+                                  },
+                                );
+                              } else {
+                                return ListTile(
+                                  title: Text(
+                                    "Create new tag",
+                                    style: theme.textTheme.titleSmall,
+                                  ),
+                                  leading: Icon(
+                                    Icons.add,
+                                    color: theme.textTheme.titleSmall?.color,
+                                  ),
+                                  onTap: () => _openAddTagDialog(),
+                                );
+                              }
+                            },
                           ),
-                          suffixIcon: IconButton(
-                            icon: const Icon(
-                              Icons.clear,
+                        ),
+                      ],
+                    );
+                  } else {
+                    return const CircularProgressIndicator();
+                  }
+                },
+              ),
+            ),
+            appBar: selecting
+                ? AppBar(
+                    automaticallyImplyLeading: false,
+                    title: Text(
+                      "Selected: ${selectedNotes.length}",
+                      style: theme.textTheme.headlineMedium,
+                    ),
+                    actions: selecting
+                        ? [
+                            IconButton(
+                              onPressed: () {
+                                _deleteSelectedNotes();
+                              },
+                              icon: const Icon(
+                                Icons.delete_outline_rounded,
+                                color: Colors.blue,
+                              ),
                             ),
-                            onPressed: () => _deleteSearch(),
+                            IconButton(
+                              onPressed: () {
+                                setState(() {
+                                  selecting = false;
+                                  selectedNotes.removeRange(0, selectedNotes.length);
+                                });
+                              },
+                              icon: const Icon(
+                                Icons.close,
+                              ),
+                            ),
+                          ]
+                        : null,
+                  )
+                : AppBar(
+                    elevation: 0,
+                    title: Text(
+                      noteBloc.isTagSelected() ? noteBloc.tag : "Notes",
+                      style: theme.textTheme.headlineMedium,
+                    ),
+                    actions: noteBloc.isTagSelected()
+                        ? [
+                            IconButton(
+                              onPressed: () => _deleteSearch(),
+                              icon: const Icon(
+                                Icons.clear,
+                                color: Colors.blue,
+                              ),
+                            ),
+                          ]
+                        : null,
+                  ),
+            floatingActionButton: FloatingActionButton(
+              child: const Icon(Icons.add),
+              onPressed: () async {
+                final insertedNote = await Navigator.pushNamed(context, AddNoteScreen.id) as Note?;
+
+                if (insertedNote != null) {
+                  if (insertedNote.isEmpty()) {
+                    context.read<NoteBloc>().add(
+                          DeleteNote(insertedNote),
+                        );
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text("Empty note discarded"),
+                      ),
+                    );
+                  }
+                }
+              },
+            ),
+            body: SafeArea(
+              child: Padding(
+                padding: const EdgeInsets.only(
+                  left: 6,
+                  right: 6,
+                  bottom: 6,
+                ),
+                child: Column(
+                  mainAxisSize: MainAxisSize.max,
+                  children: [
+                    AnimatedCrossFade(
+                      firstChild: Padding(
+                        key: Key("padding"),
+                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                        child: TextField(
+                          controller: _searchController,
+                          onChanged: (text) => _searchNotes(text),
+                          keyboardType: TextInputType.text,
+                          autofocus: false,
+                          decoration: InputDecoration(
+                            contentPadding: const EdgeInsets.symmetric(horizontal: 12),
+                            filled: true,
+                            hintText: "Search for note",
+                            border: OutlineInputBorder(
+                              borderSide: BorderSide.none,
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            suffixIcon: IconButton(
+                              icon: const Icon(
+                                Icons.clear,
+                              ),
+                              onPressed: () => _deleteSearch(),
+                            ),
                           ),
                         ),
                       ),
+                      secondChild: const SizedBox(),
+                      crossFadeState: (selecting || noteBloc.isTagSelected()) ? CrossFadeState.showSecond : CrossFadeState.showFirst,
+                      duration: const Duration(milliseconds: 200),
                     ),
-                    secondChild: const SizedBox(),
-                    crossFadeState: selecting ? CrossFadeState.showSecond : CrossFadeState.showFirst,
-                    duration: const Duration(milliseconds: 200),
-                  ),
-                  const SizedBox(
-                    height: 16,
-                  ),
-                  Expanded(
-                    child: MasonryGridView.builder(
-                      physics: const BouncingScrollPhysics(),
-                      itemCount: state.notes.length,
-                      clipBehavior: Clip.none,
-                      gridDelegate: SliverSimpleGridDelegateWithFixedCrossAxisCount(crossAxisCount: isLandscape ? 3 : 2),
-                      itemBuilder: (context, index) {
-                        final note = state.notes[index];
-                        return NoteWidget(
-                          selected: selectedNotes.contains(note),
-                          note: state.notes[index],
-                          onLongPress: () {
-                            setState(() {
-                              selecting = true;
-                              selectedNotes.add(note);
-                            });
-                          },
-                          onTap: () {
-                            if (selecting) {
-                              _selectNote(note);
-                            } else {
-                              _openNote(state, state.notes[index]);
-                            }
-                          },
-                        );
-                      },
+                    const SizedBox(
+                      height: 16,
                     ),
-                  ),
-                ],
+                    Expanded(
+                      child: MasonryGridView.builder(
+                        physics: const BouncingScrollPhysics(),
+                        itemCount: state.notes.length,
+                        clipBehavior: Clip.none,
+                        gridDelegate: SliverSimpleGridDelegateWithFixedCrossAxisCount(crossAxisCount: isLandscape ? 3 : 2),
+                        itemBuilder: (context, index) {
+                          final note = state.notes[index];
+                          return NoteWidget(
+                            selected: selectedNotes.contains(note),
+                            note: state.notes[index],
+                            onLongPress: () {
+                              setState(() {
+                                selecting = true;
+                                selectedNotes.add(note);
+                              });
+                            },
+                            onTap: () {
+                              if (selecting) {
+                                _selectNote(note);
+                              } else {
+                                _openNote(state, state.notes[index]);
+                              }
+                            },
+                          );
+                        },
+                      ),
+                    ),
+                  ],
+                ),
               ),
-            );
-          } else {
-            return const SnackBar(
-              content: Text("Something went wrong!"),
-            );
-          }
-        }),
-      ),
+            ),
+          );
+        } else {
+          return const Scaffold(
+            body: Center(
+              child: CircularProgressIndicator(),
+            ),
+          );
+        }
+      },
     );
   }
 
@@ -260,7 +292,7 @@ class _MainScreenState extends State<MainScreen> {
   _deleteSearch() {
     FocusManager.instance.primaryFocus?.unfocus();
     _searchController.clear();
-    context.read<NoteBloc>().add(const LoadNotes());
+    context.read<NoteBloc>().add(const ResetSearches());
   }
 
   _openNote(NoteLoaded state, Note note) async {
@@ -273,5 +305,86 @@ class _MainScreenState extends State<MainScreen> {
           DeleteNotes(notes: _notesToDelete),
         );
     _deselectAllNotes();
+  }
+
+  void _openAddTagDialog() {
+    showDialog(
+      context: context,
+      builder: (context) {
+        return StatefulBuilder(
+          builder: (context, setState) {
+            return AlertDialog(
+              title: const Text("Enter tag name"),
+              content: TextField(
+                key: tagNameKey,
+                controller: _tagNameController,
+                decoration: InputDecoration(
+                  hintText: "Enter tag name",
+                  errorText: tagNameError,
+                ),
+              ),
+              actions: [
+                MaterialButton(
+                  child: Text(
+                    "Add tag",
+                    style: Theme.of(context).textTheme.headlineSmall,
+                  ),
+                  onPressed: () {
+                    _saveTag(_tagNameController.text, setState);
+                  },
+                ),
+                MaterialButton(
+                  child: Text(
+                    "Close",
+                    style: Theme.of(context).textTheme.headlineSmall,
+                  ),
+                  onPressed: () {
+                    tagNameError = null;
+                    _tagNameController.clear();
+                    Navigator.pop(context);
+                  },
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+  }
+
+  void _saveTag(String text, StateSetter setState) {
+    final state = context.read<TagsBloc>().state;
+    if (state is LoadedTags) {
+      if (text.isEmpty) {
+        setState(() {
+          tagNameError = "Name can't be empty";
+          return;
+        });
+      }
+
+      final tags = state.tags;
+      bool nameNotAvailable = tags.any((element) => element.tagName.toLowerCase() == text.toLowerCase());
+
+      if (nameNotAvailable) {
+        setState(() {
+          tagNameError = "Tag already exists";
+        });
+        return;
+      }
+    }
+    context.read<TagsBloc>().add(
+          AddTag(
+            tag: Tag(tagName: text),
+          ),
+        );
+    _tagNameController.clear();
+    tagNameError = null;
+    Navigator.pop(context);
+  }
+
+  _searchNotesByTag(String tagName) {
+    context.read<NoteBloc>().add(
+          SearchNotesByTag(tag: tagName),
+        );
   }
 }

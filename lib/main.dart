@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:notes_flutter/blocs/events/note_events.dart';
+import 'package:notes_flutter/blocs/events/tag_events.dart';
 import 'package:notes_flutter/blocs/note_bloc.dart';
+import 'package:notes_flutter/blocs/tags_bloc.dart';
 import 'package:notes_flutter/box/object_box.dart';
 import 'package:notes_flutter/resources/repository.dart';
 import 'package:notes_flutter/router.dart';
@@ -35,8 +37,17 @@ class MyApp extends StatelessWidget {
               ),
             ),
         ),
+        BlocProvider(
+          create: (context) => TagsBloc(repository)
+            ..add(
+              LoadTags(
+                tags: repository.getAllTags(),
+              ),
+            ),
+        ),
       ],
       child: MaterialApp(
+        debugShowCheckedModeBanner: false,
         title: 'Flutter Demo',
         theme: ThemeData(
           primarySwatch: Colors.blue,
@@ -57,6 +68,13 @@ class MyApp extends StatelessWidget {
               fontSize: 18,
               letterSpacing: .6,
               fontWeight: FontWeight.w600,
+              color: Colors.black,
+            ),
+            titleSmall: TextStyle(
+              fontWeight: FontWeight.normal,
+              fontFamily: "Poppins",
+              letterSpacing: .6,
+              fontSize: 14,
               color: Colors.black,
             ),
             bodyMedium: TextStyle(
