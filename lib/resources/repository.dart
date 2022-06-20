@@ -48,6 +48,10 @@ class Repository {
     tagBox.put(tag);
   }
 
+  void deleteTag(Tag tag) {
+    tagBox.remove(tag.id);
+  }
+
   void deleteNote(Note note) {
     noteBox.remove(note.id);
   }

@@ -27,3 +27,12 @@ class AddTag extends TagEvent {
   @override
   List<Object?> get props => [tag];
 }
+
+class DeleteTag extends TagEvent {
+  final Tag tag;
+
+  const DeleteTag({required this.tag});
+
+  @override
+  List<Object?> get props => [tag];
+}

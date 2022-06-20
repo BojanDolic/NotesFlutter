@@ -79,7 +79,11 @@ class NoteWidget extends StatelessWidget {
                                   const SizedBox(
                                     height: 3,
                                   ),
-                                  Container(
+                                  TagItem(
+                                    note: note,
+                                    index: index,
+                                  ),
+                                  /*Container(
                                     padding: const EdgeInsets.all(6),
                                     decoration: BoxDecoration(
                                       color: Color(note.color) == Colors.white ? Colors.grey.shade200 : Colors.white.withOpacity(0.3),
@@ -91,7 +95,7 @@ class NoteWidget extends StatelessWidget {
                                         fontSize: 13,
                                       ),
                                     ),
-                                  ),
+                                  ),*/
                                 ],
                               );
                             },
@@ -122,6 +126,35 @@ class NoteWidget extends StatelessWidget {
   }
 
   tagsCount(Note note) => note.tags.length;
+}
+
+class TagItem extends StatelessWidget {
+  const TagItem({
+    Key? key,
+    required this.note,
+    required this.index,
+  }) : super(key: key);
+
+  final Note note;
+  final int index;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Container(
+      padding: const EdgeInsets.all(4),
+      decoration: BoxDecoration(
+        color: Color(note.color) == Colors.white ? Colors.grey.shade200 : Colors.white.withOpacity(0.3),
+        borderRadius: BorderRadius.circular(6),
+      ),
+      child: Text(
+        index > 1 ? getRemainingNotesCount(note) : note.tags[index].tagName,
+        style: theme.textTheme.bodySmall?.copyWith(
+          fontSize: 12,
+        ),
+      ),
+    );
+  }
 
   getRemainingNotesCount(Note note) {
     final remainingNotes = note.tags.length - 2;

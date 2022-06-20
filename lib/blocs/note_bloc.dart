@@ -3,18 +3,22 @@ import 'dart:async';
 import 'package:bloc/bloc.dart';
 import 'package:notes_flutter/blocs/events/note_events.dart';
 import 'package:notes_flutter/blocs/states/note_states.dart';
+import 'package:notes_flutter/blocs/states/tag_states.dart';
+import 'package:notes_flutter/blocs/tags_bloc.dart';
 import 'package:notes_flutter/models/tag.dart';
 import 'package:notes_flutter/resources/repository.dart';
 
 class NoteBloc extends Bloc<NoteEvent, NoteState> {
   final Repository _repository;
+  final TagsBloc _tagsBloc;
+  late StreamSubscription _streamSubscription;
 
   var _query = "";
   var _tag = "";
 
   String get tag => _tag;
 
-  NoteBloc(this._repository) : super(NoteLoading()) {
+  NoteBloc(this._repository, this._tagsBloc) : super(NoteLoading()) {
     on<LoadNotes>(_loadNotes);
     on<AddNote>(_addNote);
     on<DeleteNote>(_deleteNote);
@@ -23,6 +27,16 @@ class NoteBloc extends Bloc<NoteEvent, NoteState> {
     on<DeleteNotes>(_deleteNotes);
     on<SearchNotesByTag>(_searchNoteByTag);
     on<ResetSearches>(_resetSearches);
+
+    _streamSubscription = _tagsBloc.stream.listen(
+      (event) {
+        if (event is LoadedTags) {
+          add(
+            const LoadNotes(),
+          );
+        }
+      },
+    );
   }
 
   bool isTagSelected() => _tag != "";

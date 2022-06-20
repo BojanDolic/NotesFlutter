@@ -10,6 +10,7 @@ class TagsBloc extends Bloc<TagEvent, TagState> {
   TagsBloc(this._repository) : super(LoadingTags()) {
     on<LoadTags>(_loadTags);
     on<AddTag>(_addTag);
+    on<DeleteTag>(_deleteTag);
   }
 
   FutureOr<void> _loadTags(LoadTags event, Emitter<TagState> emit) {
@@ -24,6 +25,18 @@ class TagsBloc extends Bloc<TagEvent, TagState> {
     final tag = event.tag;
 
     _repository.insertTag(tag);
+
+    emit(
+      LoadedTags(
+        tags: _repository.getAllTags(),
+      ),
+    );
+  }
+
+  FutureOr<void> _deleteTag(DeleteTag event, Emitter<TagState> emit) {
+    final tag = event.tag;
+
+    _repository.deleteTag(tag);
 
     emit(
       LoadedTags(

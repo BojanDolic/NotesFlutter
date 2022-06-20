@@ -30,18 +30,20 @@ class MyApp extends StatelessWidget {
     return MultiBlocProvider(
       providers: [
         BlocProvider(
-          create: (context) => NoteBloc(repository)
-            ..add(
-              LoadNotes(
-                notes: repository.getAllNotes(),
-              ),
-            ),
-        ),
-        BlocProvider(
           create: (context) => TagsBloc(repository)
             ..add(
               LoadTags(
                 tags: repository.getAllTags(),
+              ),
+            ),
+        ),
+        BlocProvider(
+          create: (context) => NoteBloc(
+            repository,
+            context.read<TagsBloc>(),
+          )..add(
+              LoadNotes(
+                notes: repository.getAllNotes(),
               ),
             ),
         ),

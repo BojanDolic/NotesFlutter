@@ -60,10 +60,11 @@ class _MainScreenState extends State<MainScreen> {
                           child: ListView.builder(
                             itemCount: state.tags.length + 1,
                             itemBuilder: (context, index) {
-                              print(index);
                               if (index != state.tags.length) {
                                 final tag = state.tags[index];
                                 return ListTile(
+                                  selected: noteBloc.tag == tag.tagName,
+                                  selectedColor: Colors.red,
                                   title: Text(
                                     tag.tagName,
                                     style: theme.textTheme.titleSmall?.copyWith(
@@ -78,6 +79,7 @@ class _MainScreenState extends State<MainScreen> {
                                     Navigator.pop(context);
                                     _searchNotesByTag(tag.tagName);
                                   },
+                                  onLongPress: () => _deleteTag(tag),
                                 );
                               } else {
                                 return ListTile(
@@ -385,6 +387,12 @@ class _MainScreenState extends State<MainScreen> {
   _searchNotesByTag(String tagName) {
     context.read<NoteBloc>().add(
           SearchNotesByTag(tag: tagName),
+        );
+  }
+
+  _deleteTag(Tag tag) {
+    context.read<TagsBloc>().add(
+          DeleteTag(tag: tag),
         );
   }
 }

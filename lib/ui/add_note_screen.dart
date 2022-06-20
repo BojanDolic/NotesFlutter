@@ -6,6 +6,7 @@ import 'package:notes_flutter/blocs/states/tag_states.dart';
 import 'package:notes_flutter/blocs/tags_bloc.dart';
 import 'package:notes_flutter/models/note.dart';
 import 'package:notes_flutter/models/tag.dart';
+import 'package:notes_flutter/ui/widgets/tag_item_widget.dart';
 import 'package:notes_flutter/utils/color_constants.dart';
 
 class AddNoteScreen extends StatefulWidget {
@@ -74,6 +75,7 @@ class _AddNoteScreenState extends State<AddNoteScreen> {
               ),
               child: Column(
                 mainAxisSize: MainAxisSize.max,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   TextField(
                     style: theme.textTheme.headlineMedium?.copyWith(color: Colors.black87),
@@ -97,7 +99,25 @@ class _AddNoteScreenState extends State<AddNoteScreen> {
                     controller: descController,
                     //onChanged: (text) {}, //_insertNote(titleController.text, text, selectedColor.value),
                   ),
+                  const SizedBox(
+                    height: 12,
+                  ),
                   Wrap(
+                    alignment: WrapAlignment.start,
+                    spacing: 9,
+                    children: List<Widget>.generate(
+                      selectedTags.length,
+                      (index) => TagItemWidget(
+                        note: _note,
+                        tag: selectedTags[index],
+                      ),
+                    ),
+                  ),
+                  const SizedBox(
+                    height: 12,
+                  ),
+                  Wrap(
+                    alignment: WrapAlignment.center,
                     children: List<Widget>.generate(colorMap.length, (index) {
                       final color = colorMap[index]!;
 
@@ -109,6 +129,7 @@ class _AddNoteScreenState extends State<AddNoteScreen> {
                           onTap: () {
                             setState(() {
                               selectedColor = color;
+                              _note.color = selectedColor.value;
                             });
                           },
                           child: Container(
@@ -279,7 +300,7 @@ class _AddNoteScreenState extends State<AddNoteScreen> {
     );
   }
 
-  List<Widget> _buildTagWidgets(List<Tag> tags, StateSetter setState) {
+  List<Widget> _buildTagWidgets(List<Tag> tags, StateSetter setStateDialog) {
     final widgets = <Widget>[];
 
     for (Tag tag in tags) {
@@ -288,7 +309,7 @@ class _AddNoteScreenState extends State<AddNoteScreen> {
         selected: selectedTags.contains(tag),
         label: Text(tag.tagName),
         onSelected: (selected) {
-          setState(
+          setStateDialog(
             () {
               if (selected) {
                 selectedTags.add(tag);
@@ -297,6 +318,7 @@ class _AddNoteScreenState extends State<AddNoteScreen> {
               }
             },
           );
+          setState(() {});
           //_insertNote(titleController.text, descController.text, selectedColor.value);
         },
       );
