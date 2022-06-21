@@ -12,6 +12,7 @@ import 'package:notes_flutter/models/note.dart';
 import 'package:notes_flutter/models/tag.dart';
 import 'package:notes_flutter/ui/add_note_screen.dart';
 import 'package:notes_flutter/ui/widgets/note_widget.dart';
+import 'package:notes_flutter/utils/color_constants.dart';
 
 class MainScreen extends StatefulWidget {
   const MainScreen({Key? key}) : super(key: key);
@@ -56,30 +57,50 @@ class _MainScreenState extends State<MainScreen> {
                   if (state is LoadedTags) {
                     return Column(
                       children: [
+                        const SizedBox(
+                          height: 12,
+                        ),
                         Expanded(
                           child: ListView.builder(
                             itemCount: state.tags.length + 1,
                             itemBuilder: (context, index) {
                               if (index != state.tags.length) {
                                 final tag = state.tags[index];
-                                return ListTile(
-                                  selected: noteBloc.tag == tag.tagName,
-                                  selectedColor: Colors.red,
-                                  title: Text(
-                                    tag.tagName,
-                                    style: theme.textTheme.titleSmall?.copyWith(
-                                      color: Colors.blue,
+                                return Padding(
+                                  padding: const EdgeInsets.only(
+                                    right: 12,
+                                  ),
+                                  child: ListTile(
+                                    dense: true,
+                                    contentPadding: const EdgeInsets.only(
+                                      left: 16,
                                     ),
+                                    shape: const RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.only(
+                                        topRight: Radius.circular(
+                                          50,
+                                        ),
+                                        bottomRight: Radius.circular(
+                                          50,
+                                        ),
+                                      ),
+                                    ),
+                                    selected: noteBloc.tag == tag,
+                                    selectedTileColor: lightBlueColor,
+                                    selectedColor: Colors.blue,
+                                    title: Text(
+                                      tag.tagName,
+                                      style: theme.textTheme.titleSmall,
+                                    ),
+                                    leading: const Icon(
+                                      Icons.label_outline_rounded,
+                                    ),
+                                    onTap: () {
+                                      Navigator.pop(context);
+                                      _searchNotesByTag(tag);
+                                    },
+                                    onLongPress: () => _deleteTag(tag),
                                   ),
-                                  leading: const Icon(
-                                    Icons.label_important_outline_rounded,
-                                    color: Colors.blue,
-                                  ),
-                                  onTap: () {
-                                    Navigator.pop(context);
-                                    _searchNotesByTag(tag.tagName);
-                                  },
-                                  onLongPress: () => _deleteTag(tag),
                                 );
                               } else {
                                 return ListTile(
@@ -140,10 +161,10 @@ class _MainScreenState extends State<MainScreen> {
                 : AppBar(
                     elevation: 0,
                     title: Text(
-                      noteBloc.isTagSelected() ? noteBloc.tag : "Notes",
+                      noteBloc.isTagSelected ? noteBloc.tag.tagName : "Notes",
                       style: theme.textTheme.headlineMedium,
                     ),
-                    actions: noteBloc.isTagSelected()
+                    actions: noteBloc.isTagSelected
                         ? [
                             IconButton(
                               onPressed: () => _deleteSearch(),
@@ -158,7 +179,14 @@ class _MainScreenState extends State<MainScreen> {
             floatingActionButton: FloatingActionButton(
               child: const Icon(Icons.add),
               onPressed: () async {
-                final insertedNote = await Navigator.pushNamed(context, AddNoteScreen.id) as Note?;
+                final _note = Note();
+                _note.color = Colors.white.value;
+                if (noteBloc.isTagSelected) {
+                  _note.tags.add(
+                    noteBloc.tag,
+                  );
+                }
+                final insertedNote = await Navigator.pushNamed(context, AddNoteScreen.id, arguments: _note) as Note?;
 
                 if (insertedNote != null) {
                   if (insertedNote.isEmpty()) {
@@ -186,7 +214,6 @@ class _MainScreenState extends State<MainScreen> {
                   children: [
                     AnimatedCrossFade(
                       firstChild: Padding(
-                        key: Key("padding"),
                         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                         child: TextField(
                           controller: _searchController,
@@ -211,7 +238,7 @@ class _MainScreenState extends State<MainScreen> {
                         ),
                       ),
                       secondChild: const SizedBox(),
-                      crossFadeState: (selecting || noteBloc.isTagSelected()) ? CrossFadeState.showSecond : CrossFadeState.showFirst,
+                      crossFadeState: (selecting || noteBloc.isTagSelected) ? CrossFadeState.showSecond : CrossFadeState.showFirst,
                       duration: const Duration(milliseconds: 200),
                     ),
                     const SizedBox(
@@ -384,9 +411,9 @@ class _MainScreenState extends State<MainScreen> {
     Navigator.pop(context);
   }
 
-  _searchNotesByTag(String tagName) {
+  _searchNotesByTag(Tag tag) {
     context.read<NoteBloc>().add(
-          SearchNotesByTag(tag: tagName),
+          SearchNotesByTag(tag: tag),
         );
   }
 

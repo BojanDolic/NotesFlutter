@@ -1,5 +1,6 @@
 import 'package:equatable/equatable.dart';
 import 'package:notes_flutter/models/note.dart';
+import 'package:notes_flutter/models/tag.dart';
 
 abstract class NoteEvent extends Equatable {
   const NoteEvent();
@@ -63,9 +64,9 @@ class SearchNotes extends NoteEvent {
 }
 
 class SearchNotesByTag extends NoteEvent {
-  final String tag;
+  final Tag tag;
 
-  const SearchNotesByTag({this.tag = ""});
+  const SearchNotesByTag({required this.tag});
 
   @override
   List<Object?> get props => [tag];

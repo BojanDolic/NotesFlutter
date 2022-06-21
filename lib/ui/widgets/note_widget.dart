@@ -28,7 +28,7 @@ class NoteWidget extends StatelessWidget {
         onTap: onTap,
         child: Material(
           clipBehavior: Clip.none,
-          elevation: selected ? 30 : 0,
+          elevation: selected ? 9 : 0,
           borderRadius: BorderRadius.circular(12),
           child: Container(
             child: Padding(
@@ -113,7 +113,7 @@ class NoteWidget extends StatelessWidget {
               border: selected
                   ? Border.all(
                       color: Colors.black,
-                      width: selected ? 2.5 : 1,
+                      width: selected ? 2 : 1,
                     )
                   : Border.all(
                       color: borderColor,

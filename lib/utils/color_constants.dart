@@ -6,3 +6,5 @@ const lightRedNoteColor = Color(0xffffab91);
 const lightGreenNoteColor = Color(0xff94B49F);
 const yellowNoteColor = Color(0xffFFC54D);
 const pinkNoteColor = Color(0xffFF85B3);
+
+const lightBlueColor = Color(0x4dd1ecff);
