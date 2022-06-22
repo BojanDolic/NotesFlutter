@@ -13,6 +13,7 @@ import 'package:notes_flutter/models/tag.dart';
 import 'package:notes_flutter/ui/add_note_screen.dart';
 import 'package:notes_flutter/ui/widgets/note_widget.dart';
 import 'package:notes_flutter/utils/color_constants.dart';
+import 'package:notes_flutter/utils/ui_constants.dart';
 
 class MainScreen extends StatefulWidget {
   const MainScreen({Key? key}) : super(key: key);
@@ -340,37 +341,49 @@ class _MainScreenState extends State<MainScreen> {
     showDialog(
       context: context,
       builder: (context) {
+        final theme = Theme.of(context);
         return StatefulBuilder(
           builder: (context, setState) {
             return AlertDialog(
-              title: const Text("Enter tag name"),
+              contentPadding: const EdgeInsets.all(24),
+              title: Text(
+                "Enter tag name",
+                style: theme.textTheme.headlineMedium,
+              ),
               content: TextField(
                 key: tagNameKey,
                 controller: _tagNameController,
                 decoration: InputDecoration(
                   hintText: "Enter tag name",
+                  hintStyle: theme.textTheme.bodyLarge,
                   errorText: tagNameError,
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 12),
+                  filled: true,
+                  border: OutlineInputBorder(
+                    borderSide: BorderSide.none,
+                    borderRadius: borderRadiusConst,
+                  ),
                 ),
               ),
               actions: [
                 MaterialButton(
                   child: Text(
-                    "Add tag",
-                    style: Theme.of(context).textTheme.headlineSmall,
-                  ),
-                  onPressed: () {
-                    _saveTag(_tagNameController.text, setState);
-                  },
-                ),
-                MaterialButton(
-                  child: Text(
-                    "Close",
-                    style: Theme.of(context).textTheme.headlineSmall,
+                    "Close".toUpperCase(),
+                    style: Theme.of(context).textTheme.labelMedium,
                   ),
                   onPressed: () {
                     tagNameError = null;
                     _tagNameController.clear();
                     Navigator.pop(context);
+                  },
+                ),
+                MaterialButton(
+                  child: Text(
+                    "Add tag".toUpperCase(),
+                    style: Theme.of(context).textTheme.labelMedium,
+                  ),
+                  onPressed: () {
+                    _saveTag(_tagNameController.text, setState);
                   },
                 ),
               ],
@@ -387,8 +400,8 @@ class _MainScreenState extends State<MainScreen> {
       if (text.isEmpty) {
         setState(() {
           tagNameError = "Name can't be empty";
-          return;
         });
+        return;
       }
 
       final tags = state.tags;
