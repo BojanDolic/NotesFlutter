@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:notes_flutter/blocs/events/note_events.dart';
+import 'package:notes_flutter/blocs/events/tag_events.dart';
 import 'package:notes_flutter/blocs/note_bloc.dart';
+import 'package:notes_flutter/blocs/tags_bloc.dart';
 import 'package:notes_flutter/box/object_box.dart';
 import 'package:notes_flutter/resources/repository.dart';
 import 'package:notes_flutter/router.dart';
@@ -28,8 +30,18 @@ class MyApp extends StatelessWidget {
     return MultiBlocProvider(
       providers: [
         BlocProvider(
-          create: (context) => NoteBloc(repository)
+          create: (context) => TagsBloc(repository)
             ..add(
+              LoadTags(
+                tags: repository.getAllTags(),
+              ),
+            ),
+        ),
+        BlocProvider(
+          create: (context) => NoteBloc(
+            repository,
+            context.read<TagsBloc>(),
+          )..add(
               LoadNotes(
                 notes: repository.getAllNotes(),
               ),
@@ -37,6 +49,7 @@ class MyApp extends StatelessWidget {
         ),
       ],
       child: MaterialApp(
+        debugShowCheckedModeBanner: false,
         title: 'Flutter Demo',
         theme: ThemeData(
           primarySwatch: Colors.blue,
@@ -57,6 +70,14 @@ class MyApp extends StatelessWidget {
               fontSize: 18,
               letterSpacing: .6,
               fontWeight: FontWeight.w600,
+              color: Colors.black,
+            ),
+            titleSmall: TextStyle(
+              fontWeight: FontWeight.normal,
+              fontFamily: "Poppins",
+              letterSpacing: .6,
+              fontSize: 14,
+              color: Colors.black,
             ),
             bodyMedium: TextStyle(
               fontWeight: FontWeight.normal,
@@ -71,7 +92,29 @@ class MyApp extends StatelessWidget {
               fontSize: 14,
               color: Colors.black54,
             ),
+            bodyLarge: TextStyle(
+              fontWeight: FontWeight.normal,
+              fontFamily: "Poppins",
+              letterSpacing: .5,
+              fontSize: 15,
+              color: Colors.black,
+            ),
+            displaySmall: TextStyle(
+              fontWeight: FontWeight.normal,
+              fontFamily: "Poppins",
+              letterSpacing: .25,
+              fontSize: 13,
+              color: Colors.black,
+            ),
+            labelMedium: TextStyle(
+              fontWeight: FontWeight.w600,
+              fontFamily: "Poppins",
+              letterSpacing: 1.25,
+              fontSize: 13,
+              color: Colors.black,
+            ),
           ),
+          shadowColor: Colors.black,
           canvasColor: Colors.white,
           listTileTheme: const ListTileThemeData(
             selectedTileColor: Colors.white54,

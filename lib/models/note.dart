@@ -1,15 +1,25 @@
+// ignore_for_file: slash_for_doc_comments
+
+import 'package:notes_flutter/models/tag.dart';
 import 'package:objectbox/objectbox.dart';
 
 @Entity()
 class Note {
-  // extends Equatable
   int id = 0;
   String title = "";
   String description = "";
   int color = 255;
+  final tags = ToMany<Tag>();
 
   Note({this.title = "", this.description = "", this.color = 255});
 
+  /**
+   * Function used to check if note is "empty"
+   *
+   * Empty, in the context of the note, means that note doesn't have a title and description.
+   * The note could be colored and tags could be assigned to the note,
+   * but if it lacks a title and description it is considered empty
+   */
   bool isEmpty() => title.isEmpty && description.isEmpty;
 
   @override
@@ -25,7 +35,4 @@ class Note {
 
   @override
   int get hashCode => super.hashCode ^ id.hashCode ^ title.hashCode ^ description.hashCode ^ color.hashCode;
-
-  /* @override
-  List<Object?> get props => [id, title, description, color];*/
 }

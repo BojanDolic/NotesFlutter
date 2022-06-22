@@ -1,5 +1,6 @@
 import 'package:equatable/equatable.dart';
 import 'package:notes_flutter/models/note.dart';
+import 'package:notes_flutter/models/tag.dart';
 
 abstract class NoteEvent extends Equatable {
   const NoteEvent();
@@ -37,6 +38,22 @@ class DeleteNote extends NoteEvent {
   List<Object?> get props => [note];
 }
 
+class DeleteNotes extends NoteEvent {
+  final List<Note> notes;
+
+  const DeleteNotes({this.notes = const <Note>[]});
+
+  @override
+  List<Object?> get props => [notes];
+}
+
+class ResetSearches extends NoteEvent {
+  const ResetSearches();
+
+  @override
+  List<Object?> get props => [];
+}
+
 class SearchNotes extends NoteEvent {
   final String query;
 
@@ -44,6 +61,15 @@ class SearchNotes extends NoteEvent {
 
   @override
   List<Object?> get props => [query];
+}
+
+class SearchNotesByTag extends NoteEvent {
+  final Tag tag;
+
+  const SearchNotesByTag({required this.tag});
+
+  @override
+  List<Object?> get props => [tag];
 }
 
 class UpdateNote extends NoteEvent {
