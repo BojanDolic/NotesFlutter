@@ -13,7 +13,6 @@ class Tag {
 
   @override
   int get hashCode => id.hashCode ^ tagName.hashCode;
-
   @override
   String toString() {
     return 'Tag{id: $id, tagName: $tagName}';

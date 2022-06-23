@@ -34,7 +34,7 @@ class _MainScreenState extends State<MainScreen> {
 
   final tagNameKey = GlobalKey();
 
-  String? tagNameError = null;
+  String? tagNameError;
 
   @override
   void dispose() {
@@ -138,6 +138,14 @@ class _MainScreenState extends State<MainScreen> {
                         ? [
                             IconButton(
                               onPressed: () {
+                                _pinSelectedNotes();
+                              },
+                              icon: Icon(
+                                selectedNotes.any((element) => !element.pinned) ? Icons.push_pin_outlined : Icons.push_pin,
+                              ),
+                            ),
+                            IconButton(
+                              onPressed: () {
                                 _deleteSelectedNotes();
                               },
                               icon: const Icon(
@@ -146,12 +154,7 @@ class _MainScreenState extends State<MainScreen> {
                               ),
                             ),
                             IconButton(
-                              onPressed: () {
-                                setState(() {
-                                  selecting = false;
-                                  selectedNotes.removeRange(0, selectedNotes.length);
-                                });
-                              },
+                              onPressed: () => _deselectAllNotes(),
                               icon: const Icon(
                                 Icons.close,
                               ),
@@ -208,72 +211,153 @@ class _MainScreenState extends State<MainScreen> {
                 padding: const EdgeInsets.only(
                   left: 6,
                   right: 6,
-                  bottom: 6,
                 ),
-                child: Column(
-                  mainAxisSize: MainAxisSize.max,
-                  children: [
-                    AnimatedCrossFade(
-                      firstChild: Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                        child: TextField(
-                          controller: _searchController,
-                          onChanged: (text) => _searchNotes(text),
-                          keyboardType: TextInputType.text,
-                          autofocus: false,
-                          decoration: InputDecoration(
-                            contentPadding: const EdgeInsets.symmetric(horizontal: 12),
-                            filled: true,
-                            hintText: "Search for note",
-                            border: OutlineInputBorder(
-                              borderSide: BorderSide.none,
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            suffixIcon: IconButton(
-                              icon: const Icon(
-                                Icons.clear,
+                child: SingleChildScrollView(
+                  child: Expanded(
+                    child: Column(
+                      children: [
+                        AnimatedCrossFade(
+                          firstChild: Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                            child: TextField(
+                              controller: _searchController,
+                              onChanged: (text) => _searchNotes(text),
+                              keyboardType: TextInputType.text,
+                              autofocus: false,
+                              decoration: InputDecoration(
+                                contentPadding: const EdgeInsets.symmetric(horizontal: 12),
+                                filled: true,
+                                hintText: "Search for note",
+                                border: OutlineInputBorder(
+                                  borderSide: BorderSide.none,
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                suffixIcon: IconButton(
+                                  icon: const Icon(
+                                    Icons.clear,
+                                  ),
+                                  onPressed: () => _deleteSearch(),
+                                ),
                               ),
-                              onPressed: () => _deleteSearch(),
                             ),
                           ),
+                          secondChild: const SizedBox(),
+                          crossFadeState: (selecting || noteBloc.isTagSelected) ? CrossFadeState.showSecond : CrossFadeState.showFirst,
+                          duration: const Duration(milliseconds: 200),
                         ),
-                      ),
-                      secondChild: const SizedBox(),
-                      crossFadeState: (selecting || noteBloc.isTagSelected) ? CrossFadeState.showSecond : CrossFadeState.showFirst,
-                      duration: const Duration(milliseconds: 200),
+                        const SizedBox(
+                          height: 16,
+                        ),
+                        Visibility(
+                          visible: state.pinnedNotes.isNotEmpty &&
+                              (!noteBloc.isSearching && state.pinnedNotes.isNotEmpty) &&
+                              (!noteBloc.isTagSelected && state.pinnedNotes.isNotEmpty),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.stretch,
+                            children: [
+                              const SizedBox(
+                                height: 9,
+                              ),
+                              Padding(
+                                padding: const EdgeInsets.only(
+                                  left: 8,
+                                ),
+                                child: Text(
+                                  "Pinned",
+                                  style: theme.textTheme.headlineSmall,
+                                ),
+                              ),
+                              const SizedBox(
+                                height: 9,
+                              ),
+                              MasonryGridView.builder(
+                                physics: const NeverScrollableScrollPhysics(), //const BouncingScrollPhysics(),
+                                itemCount: state.pinnedNotes.length,
+                                clipBehavior: Clip.none,
+                                shrinkWrap: true,
+                                gridDelegate: SliverSimpleGridDelegateWithFixedCrossAxisCount(crossAxisCount: isLandscape ? 3 : 2),
+                                itemBuilder: (context, index) {
+                                  final pinnedNote = state.pinnedNotes[index];
+                                  return NoteWidget(
+                                    selected: selectedNotes.contains(pinnedNote),
+                                    note: pinnedNote,
+                                    onLongPress: () {
+                                      setState(() {
+                                        selecting = true;
+                                        selectedNotes.add(pinnedNote);
+                                      });
+                                    },
+                                    onTap: () {
+                                      if (selecting) {
+                                        _selectNote(pinnedNote);
+                                      } else {
+                                        _openNote(state, pinnedNote);
+                                      }
+                                    },
+                                  );
+                                },
+                              ),
+                            ],
+                          ),
+                        ),
+                        state.notes.isNotEmpty
+                            ? Column(
+                                crossAxisAlignment: CrossAxisAlignment.stretch,
+                                mainAxisSize: MainAxisSize.max,
+                                children: [
+                                  const SizedBox(
+                                    height: 9,
+                                  ),
+                                  Padding(
+                                    padding: const EdgeInsets.only(
+                                      left: 8,
+                                    ),
+                                    child: Text(
+                                      "Others",
+                                      style: theme.textTheme.headlineSmall,
+                                    ),
+                                  ),
+                                  const SizedBox(
+                                    height: 9,
+                                  ),
+                                  MasonryGridView.builder(
+                                    physics: const BouncingScrollPhysics(),
+                                    itemCount: state.notes.length,
+                                    clipBehavior: Clip.none,
+                                    shrinkWrap: true,
+                                    gridDelegate: SliverSimpleGridDelegateWithFixedCrossAxisCount(crossAxisCount: isLandscape ? 3 : 2),
+                                    itemBuilder: (context, index) {
+                                      final note = state.notes[index];
+                                      return NoteWidget(
+                                        selected: selectedNotes.contains(note),
+                                        note: state.notes[index],
+                                        onLongPress: () {
+                                          setState(() {
+                                            selecting = true;
+                                            selectedNotes.add(note);
+                                          });
+                                        },
+                                        onTap: () {
+                                          if (selecting) {
+                                            _selectNote(note);
+                                          } else {
+                                            _openNote(state, state.notes[index]);
+                                          }
+                                        },
+                                      );
+                                    },
+                                  )
+                                ],
+                              )
+                            : Center(
+                                child: Text(
+                                  "No notes found :(",
+                                  style: theme.textTheme.headlineLarge,
+                                ),
+                              ),
+                      ],
                     ),
-                    const SizedBox(
-                      height: 16,
-                    ),
-                    Expanded(
-                      child: MasonryGridView.builder(
-                        physics: const BouncingScrollPhysics(),
-                        itemCount: state.notes.length,
-                        clipBehavior: Clip.none,
-                        gridDelegate: SliverSimpleGridDelegateWithFixedCrossAxisCount(crossAxisCount: isLandscape ? 3 : 2),
-                        itemBuilder: (context, index) {
-                          final note = state.notes[index];
-                          return NoteWidget(
-                            selected: selectedNotes.contains(note),
-                            note: state.notes[index],
-                            onLongPress: () {
-                              setState(() {
-                                selecting = true;
-                                selectedNotes.add(note);
-                              });
-                            },
-                            onTap: () {
-                              if (selecting) {
-                                _selectNote(note);
-                              } else {
-                                _openNote(state, state.notes[index]);
-                              }
-                            },
-                          );
-                        },
-                      ),
-                    ),
-                  ],
+                  ),
                 ),
               ),
             ),
@@ -305,24 +389,32 @@ class _MainScreenState extends State<MainScreen> {
   }
 
   _deselectAllNotes() {
-    setState(() {
-      selecting = false;
-      selectedNotes.removeRange(0, selectedNotes.length);
-    });
+    setState(
+      () {
+        selecting = false;
+        selectedNotes.removeRange(0, selectedNotes.length);
+      },
+    );
   }
 
   _searchNotes(String text) {
-    context.read<NoteBloc>().add(
-          SearchNotes(
-            query: text.trim(),
-          ),
-        );
+    setState(
+      () {
+        context.read<NoteBloc>().add(
+              SearchNotes(
+                query: text.trim(),
+              ),
+            );
+      },
+    );
   }
 
   _deleteSearch() {
-    FocusManager.instance.primaryFocus?.unfocus();
-    _searchController.clear();
-    context.read<NoteBloc>().add(const ResetSearches());
+    setState(() {
+      FocusManager.instance.primaryFocus?.unfocus();
+      _searchController.clear();
+      context.read<NoteBloc>().add(const ResetSearches());
+    });
   }
 
   _openNote(NoteLoaded state, Note note) async {
@@ -334,6 +426,15 @@ class _MainScreenState extends State<MainScreen> {
     context.read<NoteBloc>().add(
           DeleteNotes(notes: _notesToDelete),
         );
+    _deselectAllNotes();
+  }
+
+  void _updateSelectedNotes() {
+    final _notesToUpdate = List.of(selectedNotes);
+    context.read<NoteBloc>().add(
+          UpdateNotes(notes: _notesToUpdate),
+        );
+
     _deselectAllNotes();
   }
 
@@ -425,14 +526,42 @@ class _MainScreenState extends State<MainScreen> {
   }
 
   _searchNotesByTag(Tag tag) {
-    context.read<NoteBloc>().add(
-          SearchNotesByTag(tag: tag),
-        );
+    setState(() {
+      context.read<NoteBloc>().add(
+            SearchNotesByTag(tag: tag),
+          );
+    });
   }
 
   _deleteTag(Tag tag) {
     context.read<TagsBloc>().add(
           DeleteTag(tag: tag),
         );
+  }
+
+  /// Function used to pin notes to the top of the screen
+  ///
+  /// Function works by pinning only notes which are not pinned already
+  ///
+  /// If among selected notes are notes that are pinned, only unpinned notes will
+  /// be pinned, other notes will remain the same
+  ///
+  /// If there are only pinned notes selected, all of the notes will be unpinned
+  ///
+  void _pinSelectedNotes() {
+    bool containsUnpinned = selectedNotes.any((element) => !element.pinned);
+    if (containsUnpinned) {
+      for (Note note in selectedNotes) {
+        if (!note.pinned) {
+          note.pinned = true;
+        }
+      }
+    } else {
+      for (Note note in selectedNotes) {
+        note.pinned = false;
+      }
+    }
+
+    _updateSelectedNotes();
   }
 }

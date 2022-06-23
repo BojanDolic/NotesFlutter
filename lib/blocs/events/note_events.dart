@@ -11,11 +11,15 @@ abstract class NoteEvent extends Equatable {
 
 class LoadNotes extends NoteEvent {
   final List<Note> notes;
+  final List<Note> pinnedNotes;
 
-  const LoadNotes({this.notes = const <Note>[]});
+  const LoadNotes({
+    this.notes = const <Note>[],
+    this.pinnedNotes = const <Note>[],
+  });
 
   @override
-  List<Object?> get props => [notes];
+  List<Object?> get props => [notes, pinnedNotes];
 }
 
 class AddNote extends NoteEvent {
@@ -79,4 +83,13 @@ class UpdateNote extends NoteEvent {
 
   @override
   List<Object?> get props => [note];
+}
+
+class UpdateNotes extends NoteEvent {
+  final List<Note> notes;
+
+  const UpdateNotes({required this.notes});
+
+  @override
+  List<Object?> get props => [notes];
 }

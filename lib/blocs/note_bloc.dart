@@ -18,6 +18,7 @@ class NoteBloc extends Bloc<NoteEvent, NoteState> {
 
   Tag get tag => _tag;
   bool get isTagSelected => _tag.id != 0;
+  bool get isSearching => _query != "";
 
   NoteBloc(this._repository, this._tagsBloc) : super(NoteLoading()) {
     on<LoadNotes>(_loadNotes);
@@ -28,6 +29,7 @@ class NoteBloc extends Bloc<NoteEvent, NoteState> {
     on<DeleteNotes>(_deleteNotes);
     on<SearchNotesByTag>(_searchNoteByTag);
     on<ResetSearches>(_resetSearches);
+    on<UpdateNotes>(_updateNotes);
 
     streamSubscription = _tagsBloc.stream.listen(
       (event) {
@@ -45,28 +47,28 @@ class NoteBloc extends Bloc<NoteEvent, NoteState> {
   void _loadNotes(LoadNotes event, Emitter<NoteState> emitter) {
     emitter(
       NoteLoaded(
-        notes: _repository.getAllNotes(
+        notes: _repository.getOtherNotes(
           query: _query,
           tag: _tag.tagName,
         ),
+        pinnedNotes: _repository.getPinnedNotes(),
       ),
     );
   }
 
   _addNote(AddNote event, Emitter<NoteState> emitter) {
-    final state = this.state;
-    if (state is NoteLoaded) {
-      _repository.insertNote(event.note);
-      //final notes = _repository.getAllNotes();
-      emitter(
-        NoteLoaded(
-          notes: _repository.getAllNotes(
-            query: _query,
-            tag: _tag.tagName,
-          ),
+    //final state = this.state;
+    _repository.insertNote(event.note);
+    //final notes = _repository.getAllNotes();
+    emitter(
+      NoteLoaded(
+        notes: _repository.getOtherNotes(
+          query: _query,
+          tag: _tag.tagName,
         ),
-      );
-    }
+        pinnedNotes: _repository.getPinnedNotes(),
+      ),
+    );
   }
 
   void _deleteNote(DeleteNote event, Emitter<NoteState> emitter) {
@@ -77,10 +79,11 @@ class NoteBloc extends Bloc<NoteEvent, NoteState> {
       _notes.remove(event.note);
       emit(
         NoteLoaded(
-          notes: _repository.getAllNotes(
+          notes: _repository.getOtherNotes(
             query: _query,
             tag: _tag.tagName,
           ),
+          pinnedNotes: _repository.getPinnedNotes(),
         ),
       );
     }
@@ -102,15 +105,19 @@ class NoteBloc extends Bloc<NoteEvent, NoteState> {
 
       emitter(
         NoteLoaded(
-          notes: _repository.getAllNotes(
+          notes: _repository.getOtherNotes(
             query: _query,
             tag: _tag.tagName,
           ),
+          pinnedNotes: _repository.getPinnedNotes(),
         ),
       );
     }
   }
 
+  /// Function used to search all notes from database using [_query] parameter
+  ///
+  /// Note: function returns no pinned notes because all notes will be shown
   FutureOr<void> _searchNote(SearchNotes event, Emitter<NoteState> emit) {
     final state = this.state;
     _query = event.query;
@@ -118,7 +125,7 @@ class NoteBloc extends Bloc<NoteEvent, NoteState> {
     if (state is NoteLoaded) {
       emit(
         NoteLoaded(
-          notes: _repository.getAllNotes(
+          notes: _repository.getOtherNotes(
             query: event.query,
             tag: _tag.tagName,
           ),
@@ -134,6 +141,7 @@ class NoteBloc extends Bloc<NoteEvent, NoteState> {
 
       yield NoteLoaded(
         notes: _repository.getAllNotes().toList(),
+        pinnedNotes: _repository.getPinnedNotes(),
       );
     }
   }
@@ -149,7 +157,7 @@ class NoteBloc extends Bloc<NoteEvent, NoteState> {
 
     emit(
       NoteLoaded(
-        notes: _repository.getAllNotes(
+        notes: _repository.getOtherNotes(
           query: _query,
           tag: _tag.tagName,
         ),
@@ -163,7 +171,27 @@ class NoteBloc extends Bloc<NoteEvent, NoteState> {
 
     emit(
       NoteLoaded(
-        notes: _repository.getAllNotes(),
+        notes: _repository.getOtherNotes(
+          query: _query,
+          tag: _tag.tagName,
+        ),
+        pinnedNotes: _repository.getPinnedNotes(),
+      ),
+    );
+  }
+
+  FutureOr<void> _updateNotes(UpdateNotes event, Emitter<NoteState> emit) {
+    final notes = event.notes;
+
+    _repository.updateNotes(notes);
+
+    emit(
+      NoteLoaded(
+        notes: _repository.getOtherNotes(
+          query: _query,
+          tag: _tag.tagName,
+        ),
+        pinnedNotes: _repository.getPinnedNotes(),
       ),
     );
   }

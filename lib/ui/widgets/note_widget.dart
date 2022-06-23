@@ -83,25 +83,23 @@ class NoteWidget extends StatelessWidget {
                                     note: note,
                                     index: index,
                                   ),
-                                  /*Container(
-                                    padding: const EdgeInsets.all(6),
-                                    decoration: BoxDecoration(
-                                      color: Color(note.color) == Colors.white ? Colors.grey.shade200 : Colors.white.withOpacity(0.3),
-                                      borderRadius: BorderRadius.circular(6),
-                                    ),
-                                    child: Text(
-                                      index > 1 ? getRemainingNotesCount(note) : note.tags[index].tagName,
-                                      style: theme.textTheme.bodySmall?.copyWith(
-                                        fontSize: 13,
-                                      ),
-                                    ),
-                                  ),*/
                                 ],
                               );
                             },
                           ).toList(),
                         ),
                       ],
+                    ),
+                  ),
+                  Visibility(
+                    visible: note.pinned,
+                    child: Align(
+                      alignment: Alignment.centerRight,
+                      child: Icon(
+                        Icons.push_pin,
+                        color: Colors.black.withOpacity(0.2),
+                        size: 18,
+                      ),
                     ),
                   ),
                 ],

@@ -12,9 +12,13 @@ class NoteLoading extends NoteState {}
 
 class NoteLoaded extends NoteState {
   final List<Note> notes;
+  final List<Note> pinnedNotes;
 
-  const NoteLoaded({this.notes = const <Note>[]});
+  const NoteLoaded({
+    this.notes = const <Note>[],
+    this.pinnedNotes = const <Note>[],
+  });
 
   @override
-  List<Object?> get props => [notes];
+  List<Object?> get props => [notes, pinnedNotes];
 }

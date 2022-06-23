@@ -36,6 +36,38 @@ class Repository {
     return notes;
   }
 
+  List<Note> getOtherNotes({String query = "", String tag = ""}) {
+    if (query.isNotEmpty || tag.isNotEmpty) {
+      return getAllNotes(query: query, tag: tag);
+    }
+
+    final _queryBuilder = noteBox.query(
+      Note_.pinned.equals(false),
+    )..order(Note_.id, flags: Order.descending);
+
+    final _query = _queryBuilder.build();
+
+    List<Note> notes = _query.find();
+    _query.close();
+    return notes;
+  }
+
+  List<Note> getPinnedNotes() {
+    final _queryBuilder = noteBox.query(
+      Note_.pinned.equals(true),
+    )..order(Note_.id, flags: Order.descending);
+
+    final _query = _queryBuilder.build();
+
+    List<Note> notes = _query.find();
+    _query.close();
+    return notes;
+  }
+
+  void updateNotes(List<Note> notes) {
+    noteBox.putMany(notes);
+  }
+
   void insertNote(Note note) {
     noteBox.put(note);
   }

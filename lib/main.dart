@@ -7,6 +7,7 @@ import 'package:notes_flutter/blocs/tags_bloc.dart';
 import 'package:notes_flutter/box/object_box.dart';
 import 'package:notes_flutter/resources/repository.dart';
 import 'package:notes_flutter/router.dart';
+import 'package:notes_flutter/utils/text_constants.dart';
 
 late ObjectBox objectBox;
 late Repository repository;
@@ -43,7 +44,8 @@ class MyApp extends StatelessWidget {
             context.read<TagsBloc>(),
           )..add(
               LoadNotes(
-                notes: repository.getAllNotes(),
+                notes: repository.getOtherNotes(),
+                pinnedNotes: repository.getPinnedNotes(),
               ),
             ),
         ),
@@ -72,6 +74,7 @@ class MyApp extends StatelessWidget {
               fontWeight: FontWeight.w600,
               color: Colors.black,
             ),
+            headlineLarge: headlineLarge,
             titleSmall: TextStyle(
               fontWeight: FontWeight.normal,
               fontFamily: "Poppins",
@@ -116,6 +119,11 @@ class MyApp extends StatelessWidget {
           ),
           shadowColor: Colors.black,
           canvasColor: Colors.white,
+          snackBarTheme: SnackBarThemeData(
+            contentTextStyle: displaySmall.copyWith(
+              color: Colors.white,
+            ),
+          ),
           listTileTheme: const ListTileThemeData(
             selectedTileColor: Colors.white54,
           ),

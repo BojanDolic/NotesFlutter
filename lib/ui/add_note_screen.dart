@@ -65,6 +65,12 @@ class _AddNoteScreenState extends State<AddNoteScreen> {
         appBar: AppBar(
           elevation: 0,
           backgroundColor: selectedColor,
+          actions: [
+            IconButton(
+              onPressed: () => _pinNote(),
+              icon: _note.pinned ? const Icon(Icons.push_pin) : const Icon(Icons.push_pin_outlined),
+            ),
+          ],
         ),
         body: SafeArea(
           child: SingleChildScrollView(
@@ -325,5 +331,23 @@ class _AddNoteScreenState extends State<AddNoteScreen> {
       widgets.add(widget);
     }
     return widgets;
+  }
+
+  _pinNote() {
+    setState(() {
+      _note.pinned = !_note.pinned;
+    });
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          _note.pinned ? "Note pinned" : "Note unpinned",
+        ),
+        duration: const Duration(
+          milliseconds: 1300,
+        ),
+        behavior: SnackBarBehavior.floating,
+      ),
+    );
   }
 }
